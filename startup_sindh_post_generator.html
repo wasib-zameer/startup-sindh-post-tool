@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Startup Sindh Post Generator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        sindh: {
+                            yellow: '#FFB800',
+                            black: '#0A0A0A',
+                            darkCard: '#141414',
+                            border: '#2A2A2A',
+                            red: '#9B1B1B'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Montserrat', 'sans-serif'],
+                        display: ['Montserrat', 'Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome / Lucide Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0A0A0A;
+            color: #F3F4F6;
+        }
+        /* Custom scrollbar for control panel */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #141414;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2E2E2E;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #404040;
+        }
+        .canvas-shadow {
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+        /* Selection highlighting inside custom editor */
+        .highlight-tag {
+            background-color: #FFB800;
+            color: #000000;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden bg-sindh-black text-gray-100">
+
+    <!-- Navigation Header -->
+    <header class="h-16 border-b border-sindh-border bg-sindh-darkCard px-4 lg:px-8 flex items-center justify-between z-10 shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-sindh-yellow flex items-center justify-center font-black text-black text-xl shadow-lg shadow-amber-500/20">
+                S
+            </div>
+            <div>
+                <h1 class="text-base font-extrabold tracking-tight text-white flex items-center gap-2">
+                    Startup Sindh <span class="text-xs font-semibold px-2 py-0.5 rounded bg-sindh-yellow/10 text-sindh-yellow border border-sindh-yellow/20">Post Generator</span>
+                </h1>
+                <p class="text-xs text-gray-400 hidden sm:block">Internal social media news layout composer (1080x1080)</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button id="btn-reset-all" class="px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-md transition flex items-center gap-1.5 border border-neutral-700">
+                <i class="fa-solid fa-rotate-left text-xs"></i> Reset Canvas
+            </button>
+            <button id="btn-download" class="px-4 py-2 text-xs font-bold text-black bg-sindh-yellow hover:bg-amber-400 rounded-md transition flex items-center gap-2 shadow-lg shadow-amber-500/20">
+                <i class="fa-solid fa-download"></i> Download 1080x1080 PNG
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+
+        <!-- LEFT PANEL: Controls (35% width desktop) -->
+        <aside class="w-full lg:w-[420px] xl:w-[460px] border-r border-sindh-border bg-sindh-darkCard flex flex-col h-full z-10 overflow-hidden">
+            <!-- Navigation Tabs -->
+            <div class="flex border-b border-sindh-border bg-neutral-900/50 p-1 gap-1">
+                <button data-tab="tab-content" class="tab-btn flex-1 py-2 text-xs font-semibold rounded-md transition text-black bg-sindh-yellow shadow">
+                    <i class="fa-solid fa-pen-nib mr-1.5"></i> Content & Text
+                </button>
+                <button data-tab="tab-image" class="tab-btn flex-1 py-2 text-xs font-semibold rounded-md transition text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-image mr-1.5"></i> News Image
+                </button>
+                <button data-tab="tab-brand" class="tab-btn flex-1 py-2 text-xs font-semibold rounded-md transition text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-sliders mr-1.5"></i> Brand & Layout
+                </button>
+            </div>
+
+            <!-- Tab Contents Scrollable -->
+            <div class="flex-1 overflow-y-auto p-5 space-y-6">
+
+                <!-- TAB 1: Content & Headline -->
+                <div id="tab-content" class="tab-content space-y-5">
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="block text-xs font-bold text-gray-200 uppercase tracking-wider">
+                                Post Headline Text
+                            </label>
+                            <span class="text-[10px] text-gray-400">Use <code class="text-sindh-yellow bg-neutral-800 px-1 py-0.5 rounded">[words]</code> for highlights</span>
+                        </div>
+                        <textarea id="input-headline" rows="5" class="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-sm text-white focus:border-sindh-yellow focus:ring-1 focus:ring-sindh-yellow outline-none transition font-sans" placeholder="Enter headline here... Wrap phrases with [brackets] to apply yellow highlight box."></textarea>
+                    </div>
+
+                    <!-- Highlight Helper Bar -->
+                    <div class="bg-neutral-900/80 p-3 rounded-lg border border-neutral-800 space-y-2">
+                        <div class="text-xs font-semibold text-gray-300 flex items-center justify-between">
+                            <span>Interactive Word Highlighting</span>
+                            <span class="text-[10px] text-amber-400">Click words below to toggle</span>
+                        </div>
+                        <div id="interactive-words" class="flex flex-wrap gap-1.5 pt-1 min-h-[36px] p-2 bg-neutral-950 rounded border border-neutral-800">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Font Size Mode</label>
+                            <select id="select-font-mode" class="w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-sindh-yellow">
+                                <option value="auto">Auto-Fit (Recommended)</option>
+                                <option value="manual">Manual Override</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Manual Size (px)</label>
+                            <input id="range-font-size" type="range" min="36" max="96" value="64" disabled class="w-full accent-sindh-yellow cursor-pointer">
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Headline Vertical Position (Y)</span>
+                                <span id="val-headline-y" class="font-mono text-sindh-yellow">780</span>
+                            </div>
+                            <input id="range-headline-y" type="range" min="400" max="920" value="780" class="w-full accent-sindh-yellow cursor-pointer">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Line Spacing Multiplier</span>
+                                <span id="val-line-height" class="font-mono text-sindh-yellow">1.18</span>
+                            </div>
+                            <input id="range-line-height" type="range" min="0.9" max="1.6" step="0.02" value="1.18" class="w-full accent-sindh-yellow cursor-pointer">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Highlight Box Vertical Padding</span>
+                                <span id="val-highlight-padding" class="font-mono text-sindh-yellow">8px</span>
+                            </div>
+                            <input id="range-highlight-padding" type="range" min="2" max="18" value="8" class="w-full accent-sindh-yellow cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Background Image -->
+                <div id="tab-image" class="tab-content hidden space-y-5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-200 uppercase tracking-wider mb-2">
+                            Upload Custom News Photograph
+                        </label>
+                        <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-neutral-700 hover:border-sindh-yellow rounded-lg cursor-pointer bg-neutral-900/50 hover:bg-neutral-900 transition">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <i class="fa-solid fa-cloud-arrow-up text-2xl text-sindh-yellow mb-2"></i>
+                                <p class="text-xs text-gray-300 font-medium">Click or drag image to upload</p>
+                                <p class="text-[10px] text-gray-500 mt-1">PNG, JPG or WEBP (Cover 1080x1080)</p>
+                            </div>
+                            <input id="file-bg-image" type="file" accept="image/*" class="hidden">
+                        </label>
+                    </div>
+
+                    <div class="p-3 bg-neutral-900/50 border border-neutral-800 rounded-lg space-y-4">
+                        <div class="text-xs font-semibold text-gray-300 flex justify-between items-center">
+                            <span>Image Fitting & Position</span>
+                            <button id="btn-reset-image" class="text-[10px] text-sindh-yellow hover:underline">Reset Framing</button>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Zoom Scale</span>
+                                <span id="val-img-zoom" class="font-mono text-sindh-yellow">1.00x</span>
+                            </div>
+                            <input id="range-img-zoom" type="range" min="1.0" max="3.0" step="0.02" value="1.0" class="w-full accent-sindh-yellow cursor-pointer">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Horizontal Position (Offset X)</span>
+                                <span id="val-img-x" class="font-mono text-sindh-yellow">0px</span>
+                            </div>
+                            <input id="range-img-x" type="range" min="-400" max="400" value="0" class="w-full accent-sindh-yellow cursor-pointer">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Vertical Position (Offset Y)</span>
+                                <span id="val-img-y" class="font-mono text-sindh-yellow">0px</span>
+                            </div>
+                            <input id="range-img-y" type="range" min="-400" max="400" value="0" class="w-full accent-sindh-yellow cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: Brand & Settings -->
+                <div id="tab-brand" class="tab-content hidden space-y-5">
+                    <!-- Logo Controls -->
+                    <div class="p-3 bg-neutral-900/50 border border-neutral-800 rounded-lg space-y-3">
+                        <div class="text-xs font-semibold text-gray-300 flex justify-between items-center">
+                            <span>Startup Sindh Logo Settings</span>
+                            <label class="text-[10px] text-sindh-yellow cursor-pointer hover:underline">
+                                Upload Custom Logo
+                                <input id="file-logo-image" type="file" accept="image/*" class="hidden">
+                            </label>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Logo Scale</span>
+                                <span id="val-logo-scale" class="font-mono text-sindh-yellow">1.0x</span>
+                            </div>
+                            <input id="range-logo-scale" type="range" min="0.5" max="2.0" step="0.05" value="1.0" class="w-full accent-sindh-yellow cursor-pointer">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <span class="text-[11px] text-gray-400">Position Left (X)</span>
+                                <input id="range-logo-x" type="range" min="20" max="200" value="50" class="w-full accent-sindh-yellow cursor-pointer mt-1">
+                            </div>
+                            <div>
+                                <span class="text-[11px] text-gray-400">Position Top (Y)</span>
+                                <input id="range-logo-y" type="range" min="20" max="200" value="40" class="w-full accent-sindh-yellow cursor-pointer mt-1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Gradient Settings -->
+                    <div class="p-3 bg-neutral-900/50 border border-neutral-800 rounded-lg space-y-3">
+                        <div class="text-xs font-semibold text-gray-300">Dark Gradient Overlay</div>
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Gradient Height Coverage</span>
+                                <span id="val-gradient-height" class="font-mono text-sindh-yellow">55%</span>
+                            </div>
+                            <input id="range-gradient-height" type="range" min="30" max="80" value="55" class="w-full accent-sindh-yellow cursor-pointer">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Darkness Intensity</span>
+                                <span id="val-gradient-opacity" class="font-mono text-sindh-yellow">95%</span>
+                            </div>
+                            <input id="range-gradient-opacity" type="range" min="50" max="100" value="95" class="w-full accent-sindh-yellow cursor-pointer">
+                        </div>
+                    </div>
+
+                    <!-- Social Icons Settings -->
+                    <div class="p-3 bg-neutral-900/50 border border-neutral-800 rounded-lg space-y-3">
+                        <div class="text-xs font-semibold text-gray-300">Social Media Bar Settings</div>
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Icons Scale</span>
+                                <span id="val-social-scale" class="font-mono text-sindh-yellow">1.0x</span>
+                            </div>
+                            <input id="range-social-scale" type="range" min="0.6" max="1.5" step="0.05" value="1.0" class="w-full accent-sindh-yellow cursor-pointer">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Bottom Margin (Y)</span>
+                                <span id="val-social-y" class="font-mono text-sindh-yellow">30px</span>
+                            </div>
+                            <input id="range-social-y" type="range" min="10" max="100" value="30" class="w-full accent-sindh-yellow cursor-pointer">
+                        </div>
+                    </div>
+
+                    <button id="btn-save-defaults" class="w-full py-2 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-xs font-semibold text-gray-200 rounded-md transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk text-sindh-yellow"></i> Save Settings to Browser Storage
+                    </button>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- RIGHT PANEL: Live Preview Workspace (65% width desktop) -->
+        <section class="flex-1 bg-neutral-950 flex flex-col items-center justify-center p-4 lg:p-8 overflow-hidden relative">
+            
+            <!-- Floating Zoom/Scale Indicator -->
+            <div class="absolute top-4 right-4 bg-neutral-900/80 border border-neutral-800 backdrop-blur px-3 py-1.5 rounded-full text-xs text-gray-400 flex items-center gap-2">
+                <i class="fa-solid fa-expand text-sindh-yellow"></i>
+                <span>Canvas Target: <strong class="text-white">1080 × 1080 px</strong></span>
+            </div>
+
+            <!-- Canvas Viewport Scaler Wrapper -->
+            <div id="canvas-wrapper" class="relative w-full max-w-[620px] aspect-square flex items-center justify-center canvas-shadow rounded-lg overflow-hidden bg-neutral-900">
+                <!-- Native 1080x1080 HTML5 Canvas -->
+                <canvas id="post-canvas" width="1080" height="1080" class="w-full h-full object-contain block"></canvas>
+            </div>
+
+            <!-- Helper Quick Toolbar below preview -->
+            <div class="mt-4 flex items-center gap-4 text-xs text-gray-400">
+                <button id="btn-quick-sample" class="hover:text-sindh-yellow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Load Reference Preset
+                </button>
+                <span>•</span>
+                <button id="btn-copy-clipboard" class="hover:text-sindh-yellow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-copy"></i> Copy Image to Clipboard
+                </button>
+            </div>
+
+            <!-- Notification Toast -->
+            <div id="toast" class="fixed bottom-6 right-6 bg-sindh-yellow text-black font-bold px-4 py-2.5 rounded-lg shadow-2xl transition transform translate-y-20 opacity-0 pointer-events-none flex items-center gap-2 z-50 text-sm">
+                <i class="fa-solid fa-circle-check text-base"></i>
+                <span id="toast-message">Action successful!</span>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        
+        // DEFAULT STATE OBJECT
+        const state = {
+            headline: "Govt Announces [Public]\nHoliday Across Country\nOn 25 December to Mark\n[Quaid-e-Azam] Day",
+            fontMode: "auto", // auto | manual
+            manualFontSize: 64,
+            headlineY: 780, // Y anchor bottom reference
+            lineHeightMultiplier: 1.18,
+            highlightPaddingY: 8,
+            
+            // Image Adjustments
+            imageScale: 1.0,
+            imageX: 0,
+            imageY: 0,
+            
+            // Logo Adjustments
+            logoX: 50,
+            logoY: 40,
+            logoScale: 1.0,
+
+            // Gradient Settings
+            gradientHeightPct: 55, // % from bottom
+            gradientOpacity: 0.95,
+
+            // Social Settings
+            socialScale: 1.0,
+            socialOffsetY: 30
+        };
+
+        // IMAGE ASSETS STORE
+        const assets = {
+            bgImage: null,
+            logoImage: null,
+            socialIcons: null
+        };
+
+        // DEFAULT SYNTHETIC/EMBEDDED ASSET GENERATORS
+        // 1. Default Mazar-e-Quaid landmark photograph canvas generator
+        function createDefaultBgImage() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1080;
+            canvas.height = 1080;
+            const ctx = canvas.getContext('2d');
+
+            // Sky gradient sunset
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, 700);
+            skyGradient.addColorStop(0, '#593B2B');
+            skyGradient.addColorStop(0.4, '#D9824B');
+            skyGradient.addColorStop(0.8, '#E3A857');
+            skyGradient.addColorStop(1, '#C78C43');
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, 1080, 1080);
+
+            // Sun glow
+            const sunGrad = ctx.createRadialGradient(540, 250, 20, 540, 250, 400);
+            sunGrad.addColorStop(0, 'rgba(255, 240, 200, 0.9)');
+            sunGrad.addColorStop(0.5, 'rgba(235, 170, 90, 0.4)');
+            sunGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = sunGrad;
+            ctx.fillRect(0, 0, 1080, 700);
+
+            // Mazar-e-Quaid Dome Silhouette / Architectural Representation
+            ctx.save();
+            ctx.fillStyle = '#EBE5D8';
+            ctx.strokeStyle = '#221A15';
+            ctx.lineWidth = 3;
+
+            // Dome
+            ctx.beginPath();
+            ctx.arc(540, 360, 130, Math.PI, 0, false);
+            ctx.fill();
+            ctx.stroke();
+
+            // Main Structure Block
+            ctx.beginPath();
+            ctx.rect(380, 360, 320, 240);
+            ctx.fillStyle = '#E0D6C3';
+            ctx.fill();
+            ctx.stroke();
+
+            // Arched Doorway Main
+            ctx.beginPath();
+            ctx.moveTo(500, 600);
+            ctx.lineTo(500, 460);
+            ctx.quadraticCurveTo(540, 420, 580, 460);
+            ctx.lineTo(580, 600);
+            ctx.fillStyle = '#221711';
+            ctx.fill();
+
+            // Side Arch Details
+            ctx.beginPath();
+            ctx.rect(405, 390, 25, 45);
+            ctx.rect(650, 390, 25, 45);
+            ctx.fillStyle = '#A39580';
+            ctx.fill();
+
+            // Steps / Base Podium
+            ctx.fillStyle = '#C4B7A0';
+            ctx.fillRect(280, 600, 520, 40);
+            ctx.fillRect(220, 640, 640, 50);
+
+            // Foreground City / Trees Ambient Silhouette
+            ctx.fillStyle = '#211812';
+            ctx.fillRect(0, 680, 1080, 400);
+
+            ctx.restore();
+
+            const img = new Image();
+            img.src = canvas.toDataURL('image/jpeg', 0.9);
+            return img;
+        }
+
+        // 2. Startup Sindh Logo SVG generator
+        function createDefaultLogo() {
+            const svgString = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+                <style>
+                    .s-text { font-family: 'Montserrat', sans-serif; font-weight: 900; fill: #FFFFFF; }
+                </style>
+                <!-- Stylized S Symbol in crisp white -->
+                <g fill="#FFFFFF">
+                    <path d="M190,40 C210,40 220,55 220,55 L180,95 C180,95 175,90 165,90 C155,90 148,96 148,105 C148,118 165,125 195,140 C225,155 235,178 235,205 C235,245 200,265 150,265 C100,265 75,235 75,235 L115,195 C115,195 125,205 145,205 C160,205 170,195 170,185 C170,172 155,165 125,150 C95,135 83,115 83,90 C83,52 125,40 190,40 Z" />
+                    <circle cx="120" cy="235" r="22"/>
+                </g>
+                <!-- STARTUP SINDH TEXT -->
+                <text x="150" y="215" class="s-text" font-size="28" text-anchor="middle" letter-spacing="3">STARTUP</text>
+                <text x="150" y="248" class="s-text" font-size="28" text-anchor="middle" letter-spacing="4">SINDH</text>
+            </svg>`;
+            const img = new Image();
+            img.src = 'data:image/svg+xml;base64,' + btoa(svgString);
+            return img;
+        }
+
+        // 3. Social Media Icons Bar Generator
+        function createSocialIcons() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 400;
+            canvas.height = 80;
+            const ctx = canvas.getContext('2d');
+
+            const icons = [
+                { type: 'fb', char: 'f' },
+                { type: 'ig', char: '📷' },
+                { type: 'x', char: '𝕏' },
+                { type: 'in', char: 'in' }
+            ];
+
+            const circleRadius = 22;
+            const spacing = 70;
+            const startX = (canvas.width - (icons.length - 1) * spacing) / 2;
+            const centerY = 40;
+
+            icons.forEach((icon, i) => {
+                const cx = startX + i * spacing;
+                // Dark translucent circle button
+                ctx.beginPath();
+                ctx.arc(cx, centerY, circleRadius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+                ctx.fill();
+
+                // Icon graphics/letters
+                ctx.fillStyle = '#FFFFFF';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                if (icon.type === 'fb') {
+                    ctx.font = 'bold 24px Montserrat, sans-serif';
+                    ctx.fillText('f', cx, centerY + 1);
+                } else if (icon.type === 'ig') {
+                    // Instagram camera box
+                    ctx.strokeStyle = '#FFFFFF';
+                    ctx.lineWidth = 2.5;
+                    ctx.strokeRect(cx - 10, centerY - 10, 20, 20);
+                    ctx.beginPath();
+                    ctx.arc(cx, centerY, 5, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(cx + 6, centerY - 6, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (icon.type === 'x') {
+                    ctx.font = 'bold 18px Inter, sans-serif';
+                    ctx.fillText('𝕏', cx, centerY);
+                } else if (icon.type === 'in') {
+                    ctx.font = 'bold 18px Montserrat, sans-serif';
+                    ctx.fillText('in', cx, centerY);
+                }
+            });
+
+            const img = new Image();
+            img.src = canvas.toDataURL('image/png');
+            return img;
+        }
+
+        
+        const canvas = document.getElementById('post-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Main Rendering Loop
+        function renderPost() {
+            // 1. Clear Canvas
+            ctx.clearRect(0, 0, 1080, 1080);
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, 1080, 1080);
+
+            // 2. Render Background Image with Zoom & Offset
+            if (assets.bgImage && assets.bgImage.complete) {
+                ctx.save();
+                // Create clipping region for canvas 1080x1080
+                ctx.beginPath();
+                ctx.rect(0, 0, 1080, 1080);
+                ctx.clip();
+
+                const img = assets.bgImage;
+                const aspect = img.width / img.height;
+                let drawW, drawH;
+
+                if (aspect > 1) {
+                    drawH = 1080 * state.imageScale;
+                    drawW = drawH * aspect;
+                } else {
+                    drawW = 1080 * state.imageScale;
+                    drawH = drawW / aspect;
+                }
+
+                const drawX = (1080 - drawW) / 2 + state.imageX;
+                const drawY = (1080 - drawH) / 2 + state.imageY;
+
+                ctx.drawImage(img, drawX, drawY, drawW, drawH);
+                ctx.restore();
+            }
+
+            // 3. Render Dark Bottom Gradient Overlay
+            ctx.save();
+            const gradHeight = (1080 * state.gradientHeightPct) / 100;
+            const gradTop = 1080 - gradHeight;
+            const gradient = ctx.createLinearGradient(0, gradTop, 0, 1080);
+            
+            gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+            gradient.addColorStop(0.35, `rgba(0, 0, 0, ${state.gradientOpacity * 0.5})`);
+            gradient.addColorStop(0.8, `rgba(0, 0, 0, ${state.gradientOpacity * 0.95})`);
+            gradient.addColorStop(1, `rgba(0, 0, 0, ${state.gradientOpacity})`);
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, gradTop, 1080, gradHeight);
+            ctx.restore();
+
+            // 4. Render Startup Sindh Logo (Top-Left)
+            if (assets.logoImage && assets.logoImage.complete) {
+                ctx.save();
+                const logoScale = state.logoScale;
+                const baseWidth = 140; // Reference width
+                const aspect = assets.logoImage.width / assets.logoImage.height || 1;
+                const logoW = baseWidth * logoScale;
+                const logoH = logoW / aspect;
+
+                ctx.drawImage(assets.logoImage, state.logoX, state.logoY, logoW, logoH);
+                ctx.restore();
+            }
+
+            // 5. Render Social Media Icons Bar (Bottom Center)
+            if (assets.socialIcons && assets.socialIcons.complete) {
+                ctx.save();
+                const sScale = state.socialScale;
+                const baseW = 360 * sScale;
+                const baseH = 72 * sScale;
+                const posX = (1080 - baseW) / 2;
+                const posY = 1080 - state.socialOffsetY - baseH;
+
+                ctx.drawImage(assets.socialIcons, posX, posY, baseW, baseH);
+                ctx.restore();
+            }
+
+            // 6. Render Headline with Auto-fit & Highlight Boxes
+            renderHeadline();
+        }
+
+        
+        function parseHeadlineTokens(text) {
+            // Parses [Highlighted] and regular text into structured word objects
+            const lines = text.split('\n');
+            return lines.map(line => {
+                const words = [];
+                const regex = /\[([^\]]+)\]|([^\s\[\]]+)/g;
+                let match;
+                while ((match = regex.exec(line)) !== null) {
+                    if (match[1]) {
+                        // Bracketed words inside highlight
+                        const subWords = match[1].trim().split(/\s+/);
+                        subWords.forEach(w => words.push({ text: w, highlighted: true }));
+                    } else if (match[2]) {
+                        words.push({ text: match[2], highlighted: false });
+                    }
+                }
+                return words;
+            });
+        }
+
+        function renderHeadline() {
+            const rawText = state.headline.trim();
+            if (!rawText) return;
+
+            const parsedLines = parseHeadlineTokens(rawText);
+            const maxWidth = 940; // 1080 - 140px margins
+            const paddingX = 14; // Horizontal yellow box padding
+            const paddingY = parseInt(state.highlightPaddingY, 10); // Vertical box padding
+            
+            ctx.save();
+            
+            // Determine Font Size
+            let fontSize = state.manualFontSize;
+            if (state.fontMode === 'auto') {
+                // Auto calculation algorithm
+                fontSize = calculateOptimalFontSize(parsedLines, maxWidth);
+            }
+
+            const fontStack = `900 ${fontSize}px 'Montserrat', 'Inter', sans-serif`;
+            ctx.font = fontStack;
+            ctx.textBaseline = 'middle';
+
+            const lineHeight = fontSize * state.lineHeightMultiplier;
+
+            // Measure and wrap lines dynamically
+            const wrappedLines = [];
+            
+            parsedLines.forEach(lineWords => {
+                if (lineWords.length === 0) return;
+                
+                let currentLine = [];
+                let currentWidth = 0;
+
+                lineWords.forEach(wordObj => {
+                    const wordWidth = ctx.measureText(wordObj.text).width;
+                    const spaceWidth = ctx.measureText(' ').width;
+
+                    if (currentLine.length > 0 && currentWidth + spaceWidth + wordWidth > maxWidth) {
+                        wrappedLines.push(currentLine);
+                        currentLine = [wordObj];
+                        currentWidth = wordWidth;
+                    } else {
+                        if (currentLine.length > 0) currentWidth += spaceWidth;
+                        currentLine.push(wordObj);
+                        currentWidth += wordWidth;
+                    }
+                });
+                if (currentLine.length > 0) {
+                    wrappedLines.push(currentLine);
+                }
+            });
+
+            // Calculate total bounding block height and starting Y coordinate
+            const totalTextHeight = wrappedLines.length * lineHeight;
+            const startY = state.headlineY - (totalTextHeight / 2);
+
+            // Draw Lines & Highlight Boxes
+            wrappedLines.forEach((line, lineIdx) => {
+                const lineY = startY + (lineIdx * lineHeight);
+                
+                // Calculate total line rendering width for center alignment
+                let lineTotalWidth = 0;
+                const wordWidths = line.map(w => {
+                    const width = ctx.measureText(w.text).width;
+                    return width;
+                });
+                const spaceWidth = ctx.measureText(' ').width;
+
+                lineTotalWidth = wordWidths.reduce((acc, curr) => acc + curr, 0) + (line.length - 1) * spaceWidth;
+                
+                let currentX = (1080 - lineTotalWidth) / 2;
+
+                // First pass: Draw all Yellow Highlight Rectangles
+                let i = 0;
+                while (i < line.length) {
+                    if (line[i].highlighted) {
+                        let groupWidth = wordWidths[i];
+                        let j = i + 1;
+                        // Group consecutive highlighted words into one continuous rectangle
+                        while (j < line.length && line[j].highlighted) {
+                            groupWidth += spaceWidth + wordWidths[j];
+                            j++;
+                        }
+
+                        const rectX = currentX - paddingX;
+                        const rectY = lineY - (fontSize / 2) - paddingY;
+                        const rectW = groupWidth + (paddingX * 2);
+                        const rectH = fontSize + (paddingY * 2);
+
+                        // Startup Sindh Signature Yellow Box #FFB800
+                        ctx.fillStyle = '#FFB800';
+                        ctx.fillRect(rectX, rectY, rectW, rectH);
+
+                        // Advance index
+                        i = j;
+                    } else {
+                        i++;
+                    }
+                    if (i < line.length) {
+                        // Recompute currentX for next check
+                        currentX = (1080 - lineTotalWidth) / 2 + wordWidths.slice(0, i).reduce((a, b) => a + b, 0) + i * spaceWidth;
+                    }
+                }
+
+                // Second pass: Draw Text Characters (Black inside yellow, White outside)
+                currentX = (1080 - lineTotalWidth) / 2;
+
+                line.forEach((wordObj, idx) => {
+                    const wWidth = wordWidths[idx];
+
+                    if (wordObj.highlighted) {
+                        ctx.fillStyle = '#000000'; // Crisp Deep Black on Yellow
+                    } else {
+                        ctx.fillStyle = '#FFFFFF'; // Crisp White on Dark Gradient
+                    }
+
+                    ctx.fillText(wordObj.text, currentX, lineY);
+                    currentX += wWidth + spaceWidth;
+                });
+            });
+
+            ctx.restore();
+        }
+
+        // Auto font fitting solver
+        function calculateOptimalFontSize(parsedLines, maxWidth) {
+            let low = 36;
+            let high = 88;
+            let bestSize = 60;
+
+            const maxAllowedHeight = 360; // Max vertical area for headline
+
+            for (let size = high; size >= low; size -= 2) {
+                ctx.font = `900 ${size}px 'Montserrat', 'Inter', sans-serif`;
+                let totalWrappedLines = 0;
+
+                parsedLines.forEach(lineWords => {
+                    let currentWidth = 0;
+                    let linesForThisGroup = 1;
+
+                    lineWords.forEach(wordObj => {
+                        const wordWidth = ctx.measureText(wordObj.text).width;
+                        const spaceWidth = ctx.measureText(' ').width;
+
+                        if (currentWidth + spaceWidth + wordWidth > maxWidth) {
+                            linesForThisGroup++;
+                            currentWidth = wordWidth;
+                        } else {
+                            currentWidth += (currentWidth === 0 ? 0 : spaceWidth) + wordWidth;
+                        }
+                    });
+                    totalWrappedLines += linesForThisGroup;
+                });
+
+                const totalHeight = totalWrappedLines * (size * state.lineHeightMultiplier);
+                if (totalHeight <= maxAllowedHeight) {
+                    bestSize = size;
+                    break;
+                }
+            }
+            return bestSize;
+        }
+
+
+        // Interactive Word Click-to-Highlight Sync Component
+        function updateInteractiveWords() {
+            const container = document.getElementById('interactive-words');
+            container.innerHTML = '';
+
+            const rawText = state.headline;
+            // Tokenize by spaces & linebreaks while preserving brackets
+            const tokens = rawText.split(/(\s+)/);
+
+            tokens.forEach((token, index) => {
+                if (!token.trim()) return; // skip whitespace
+
+                const isHighlighted = token.startsWith('[') && token.endsWith(']');
+                const cleanText = token.replace(/[\[\]]/g, '');
+
+                const btn = document.createElement('button');
+                btn.className = `text-xs px-2 py-1 rounded font-bold transition flex items-center gap-1 ${
+                    isHighlighted 
+                        ? 'bg-sindh-yellow text-black shadow-sm' 
+                        : 'bg-neutral-800 text-gray-300 hover:bg-neutral-700'
+                }`;
+                btn.innerText = cleanText;
+
+                btn.onclick = () => {
+                    // Toggle brackets in raw headline
+                    if (isHighlighted) {
+                        tokens[index] = cleanText;
+                    } else {
+                        tokens[index] = `[${cleanText}]`;
+                    }
+                    state.headline = tokens.join('');
+                    document.getElementById('input-headline').value = state.headline;
+                    updateInteractiveWords();
+                    renderPost();
+                };
+
+                container.appendChild(btn);
+            });
+        }
+
+        // DOM Elements & Event Binding
+        function initUI() {
+            // Tab switching
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => {
+                        b.classList.remove('bg-sindh-yellow', 'text-black', 'shadow');
+                        b.classList.add('text-gray-400');
+                    });
+                    btn.classList.add('bg-sindh-yellow', 'text-black', 'shadow');
+                    btn.classList.remove('text-gray-400');
+
+                    const tabId = btn.getAttribute('data-tab');
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                    document.getElementById(tabId).classList.remove('hidden');
+                });
+            });
+
+            // Headline Textarea
+            const headlineInput = document.getElementById('input-headline');
+            headlineInput.value = state.headline;
+            headlineInput.addEventListener('input', (e) => {
+                state.headline = e.target.value;
+                updateInteractiveWords();
+                renderPost();
+            });
+
+            // Font Mode Select
+            const selectFontMode = document.getElementById('select-font-mode');
+            const rangeFontSize = document.getElementById('range-font-size');
+            selectFontMode.addEventListener('change', (e) => {
+                state.fontMode = e.target.value;
+                rangeFontSize.disabled = state.fontMode === 'auto';
+                renderPost();
+            });
+            rangeFontSize.addEventListener('input', (e) => {
+                state.manualFontSize = parseInt(e.target.value, 10);
+                renderPost();
+            });
+
+            // Sliders Binding Utility
+            function bindRange(id, targetStateKey, valDisplayId, suffix = '', transformFn = (v) => v) {
+                const input = document.getElementById(id);
+                const display = document.getElementById(valDisplayId);
+                input.addEventListener('input', (e) => {
+                    const val = transformFn(e.target.value);
+                    state[targetStateKey] = val;
+                    if (display) display.innerText = e.target.value + suffix;
+                    renderPost();
+                });
+            }
+
+            bindRange('range-headline-y', 'headlineY', 'val-headline-y');
+            bindRange('range-line-height', 'lineHeightMultiplier', 'val-line-height', '', parseFloat);
+            bindRange('range-highlight-padding', 'highlightPaddingY', 'val-highlight-padding', 'px');
+
+            // Background Image Controls
+            bindRange('range-img-zoom', 'imageScale', 'val-img-zoom', 'x', parseFloat);
+            bindRange('range-img-x', 'imageX', 'val-img-x', 'px', parseInt);
+            bindRange('range-img-y', 'imageY', 'val-img-y', 'px', parseInt);
+
+            document.getElementById('btn-reset-image').addEventListener('click', () => {
+                state.imageScale = 1.0;
+                state.imageX = 0;
+                state.imageY = 0;
+                document.getElementById('range-img-zoom').value = 1.0;
+                document.getElementById('range-img-x').value = 0;
+                document.getElementById('range-img-y').value = 0;
+                document.getElementById('val-img-zoom').innerText = '1.00x';
+                document.getElementById('val-img-x').innerText = '0px';
+                document.getElementById('val-img-y').innerText = '0px';
+                renderPost();
+            });
+
+            // Image File Upload
+            document.getElementById('file-bg-image').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            assets.bgImage = img;
+                            renderPost();
+                            showToast("Custom news image uploaded!");
+                        };
+                        img.src = evt.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Custom Logo Upload
+            document.getElementById('file-logo-image').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            assets.logoImage = img;
+                            renderPost();
+                            showToast("Startup Sindh logo updated!");
+                        };
+                        img.src = evt.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Branding Sliders
+            bindRange('range-logo-scale', 'logoScale', 'val-logo-scale', 'x', parseFloat);
+            bindRange('range-logo-x', 'logoX', null, '', parseInt);
+            bindRange('range-logo-y', 'logoY', null, '', parseInt);
+
+            bindRange('range-gradient-height', 'gradientHeightPct', 'val-gradient-height', '%', parseInt);
+            bindRange('range-gradient-opacity', 'gradientOpacity', 'val-gradient-opacity', '%', (v) => parseFloat(v) / 100);
+
+            bindRange('range-social-scale', 'socialScale', 'val-social-scale', 'x', parseFloat);
+            bindRange('range-social-y', 'socialOffsetY', 'val-social-y', 'px', parseInt);
+
+            // Action Buttons
+            document.getElementById('btn-download').addEventListener('click', downloadCanvasPNG);
+            document.getElementById('btn-reset-all').addEventListener('click', resetAllDefaults);
+            document.getElementById('btn-save-defaults').addEventListener('click', saveToLocalStorage);
+            document.getElementById('btn-quick-sample').addEventListener('click', loadReferencePreset);
+            document.getElementById('btn-copy-clipboard').addEventListener('click', copyCanvasToClipboard);
+
+            updateInteractiveWords();
+        }
+
+
+        function downloadCanvasPNG() {
+            const link = document.createElement('a');
+            const today = new Date().toISOString().split('T')[0];
+            link.download = `startup-sindh-post-${today}.png`;
+            link.href = canvas.toDataURL('image/png', 1.0);
+            link.click();
+            showToast("Downloaded 1080x1080 PNG successfully!");
+        }
+
+        function copyCanvasToClipboard() {
+            try {
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        showToast("Clipboard copy failed");
+                        return;
+                    }
+                    const item = new ClipboardItem({ 'image/png': blob });
+                    navigator.clipboard.write([item]).then(() => {
+                        showToast("Copied 1080x1080 image to clipboard!");
+                    }).catch(() => {
+                        // Fallback message
+                        showToast("Use Download PNG button on this browser");
+                    });
+                });
+            } catch (err) {
+                showToast("Direct copy not supported in this iframe environment");
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('startup_sindh_post_settings', JSON.stringify(state));
+            showToast("Brand layout settings saved to LocalStorage!");
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('startup_sindh_post_settings');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    Object.assign(state, parsed);
+                } catch (e) {
+                    console.error("Could not parse saved settings");
+                }
+            }
+        }
+
+        function resetAllDefaults() {
+            state.headline = "Govt Announces [Public]\nHoliday Across Country\nOn 25 December to Mark\n[Quaid-e-Azam] Day";
+            state.fontMode = "auto";
+            state.manualFontSize = 64;
+            state.headlineY = 780;
+            state.lineHeightMultiplier = 1.18;
+            state.highlightPaddingY = 8;
+            state.imageScale = 1.0;
+            state.imageX = 0;
+            state.imageY = 0;
+            state.logoX = 50;
+            state.logoY = 40;
+            state.logoScale = 1.0;
+            state.gradientHeightPct = 55;
+            state.gradientOpacity = 0.95;
+            state.socialScale = 1.0;
+            state.socialOffsetY = 30;
+
+            assets.bgImage = createDefaultBgImage();
+            
+            document.getElementById('input-headline').value = state.headline;
+            updateInteractiveWords();
+            renderPost();
+            showToast("Canvas reset to default template");
+        }
+
+        function loadReferencePreset() {
+            resetAllDefaults();
+            showToast("Loaded official reference post style!");
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.innerText = message;
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        window.onload = function() {
+            // Load saved settings if present
+            loadFromLocalStorage();
+
+            // Load Default Assets
+            assets.bgImage = createDefaultBgImage();
+            assets.logoImage = createDefaultLogo();
+            assets.socialIcons = createSocialIcons();
+
+            // Initialize UI logic
+            initUI();
+
+            // Initial Render
+            setTimeout(() => {
+                renderPost();
+            }, 200);
+        };
+    </script>
+</body>
+</html>
